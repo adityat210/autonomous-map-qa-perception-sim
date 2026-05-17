@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+dist/
+*.egg-info/
+.env
+work/
+data/sample/generated_map/road_graph.json
+data/sample/generated_map/validation_results.json
