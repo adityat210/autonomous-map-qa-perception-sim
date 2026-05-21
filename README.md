@@ -142,6 +142,8 @@ the frontend service is exposed through nodeport `30080` for local clusters that
 
 after running the default sample pipeline, the dashboard should show a road-network qa view, issue overlays, high/medium/low issue counts, graph statistics, a validation issue table, a perception sample status panel, and a benchmark panel. exact issue counts can change as validation rules evolve, but the sample data should always produce reproducible issues.
 
+![dashboard validation run](docs/screenshots/dashboard-validation.jpg)
+
 ## engineering notes
 
 openstreetmap and osmnx are used because they provide accessible real road-network data without requiring private autonomous vehicle map assets. graph validation matters because routing, map matching, and scenario simulation all depend on connected and correctly attributed road networks.
