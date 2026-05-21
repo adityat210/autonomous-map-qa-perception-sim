@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: map-qa-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: map-qa-backend
+  template:
+    metadata:
+      labels:
+        app: map-qa-backend
+    spec:
+      containers:
+        - name: backend
+          image: map-qa-backend:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: map-qa-config
+          env:
+            - name: DATABASE_URL
+              value: postgresql://mapqa:mapqa@map-qa-postgres:5432/mapqa
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
