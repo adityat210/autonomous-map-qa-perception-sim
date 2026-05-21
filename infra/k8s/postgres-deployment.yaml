@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: map-qa-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: map-qa-postgres
+  template:
+    metadata:
+      labels:
+        app: map-qa-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgis/postgis:16-3.4
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: mapqa
+            - name: POSTGRES_USER
+              value: mapqa
+            - name: POSTGRES_PASSWORD
+              value: mapqa
