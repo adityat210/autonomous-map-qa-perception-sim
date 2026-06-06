@@ -45,6 +45,18 @@ the benchmark uses pytorch when available to run an image tensor normalization a
 
 ## run locally
 
+requirements:
+
+- python 3.11 or newer
+- node 22 or newer
+- docker desktop, kind, or minikube only for container and kubernetes runs
+
+the base install does not require pytorch. the gpu benchmark endpoint still works without pytorch by using a deterministic cpu fallback. install `backend/requirements-gpu.txt` only when pytorch is available for the target machine:
+
+```bash
+pip install -r backend/requirements-gpu.txt
+```
+
 create the sample perception data:
 
 ```bash
@@ -54,22 +66,29 @@ python scripts/generate_sample_data.py
 start the backend:
 
 ```bash
-cd backend
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-PYTHONPATH=. uvicorn app.main:app --reload --port 8000
+pip install -r backend/requirements.txt
+PYTHONPATH=backend uvicorn app.main:app --reload --port 8000
 ```
 
 start the frontend in another terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
 open `http://localhost:5173`, run the pipeline, and inspect the validation table and panels.
+
+if port `8000` is already in use, start the backend on another port and pass that url to vite:
+
+```bash
+PYTHONPATH=backend uvicorn app.main:app --reload --port 8001
+cd frontend
+VITE_API_URL=http://localhost:8001 npm run dev
+```
 
 ## useful commands
 
@@ -97,6 +116,13 @@ run tests:
 PYTHONPATH=backend pytest backend/tests
 ```
 
+build the frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
 ## api endpoints
 
 - `GET /health`
@@ -116,7 +142,7 @@ PYTHONPATH=backend pytest backend/tests
 docker compose -f infra/docker-compose.yml up --build
 ```
 
-the backend is available on `http://localhost:8000` and the frontend on `http://localhost:5173`.
+the backend is available on `http://localhost:8000` and the frontend on `http://localhost:5173`. the compose build passes `VITE_API_URL=http://localhost:8000` into the static frontend bundle.
 
 ## kubernetes
 
@@ -130,19 +156,46 @@ docker build -t map-qa-frontend:local -f frontend/Dockerfile .
 with kind:
 
 ```bash
+kind create cluster
+docker build -t map-qa-backend:local -f backend/Dockerfile .
+docker build -t map-qa-frontend:local --build-arg VITE_API_URL=http://localhost:8000 -f frontend/Dockerfile .
 kind load docker-image map-qa-backend:local
 kind load docker-image map-qa-frontend:local
 kubectl apply -f infra/k8s
 kubectl port-forward service/map-qa-backend 8000:8000
 ```
 
-the frontend service is exposed through nodeport `30080` for local clusters that support it.
+the frontend service is exposed through nodeport `30080` for local clusters that support it. because vite bakes environment variables at build time, rebuild the frontend image with a different `VITE_API_URL` build arg if the browser should call a backend url other than `http://localhost:8000`.
 
 ## expected dashboard output
 
 after running the default sample pipeline, the dashboard should show a road-network qa view, issue overlays, high/medium/low issue counts, graph statistics, a validation issue table, a perception sample status panel, and a benchmark panel. exact issue counts can change as validation rules evolve, but the sample data should always produce reproducible issues.
 
 ![dashboard validation run](docs/screenshots/dashboard-validation.jpg)
+
+## current capabilities vs. limitations
+
+currently supported:
+
+- deterministic generated map data for offline qa development
+- optional openstreetmap ingestion through osmnx when network access and geospatial dependencies are available
+- graph validation checks for disconnected components, dead ends, duplicate edges, geometry validity, segment length outliers, road class gaps, speed metadata gaps, one-way conflicts, and low connectivity
+- fastapi endpoints for ingestion, validation, graph stats, issue summaries, perception checks, visual odometry, and gpu/cpu benchmarking
+- committed kitti-style sample perception data with images, timestamps, point-cloud-like binary files, and calibration metadata
+- opencv-based orb visual odometry when opencv is installed, with documented limitations
+- pytorch benchmark with cuda timing when available and cpu-only behavior when cuda is unavailable
+- local json validation-result storage, with optional postgres table writes when `DATABASE_URL` and `psycopg` are available
+- docker compose and local kubernetes manifests for backend, frontend, and postgres
+
+known limitations:
+
+- the sample road graph is intentionally small and is not a substitute for production hd map data
+- openstreetmap ingestion depends on live network access and public osm coverage
+- postgres storage records issue rows but does not yet use postgis spatial indexing or spatial queries
+- the frontend uses a lightweight svg road-network view, not full deck.gl or mapbox geospatial rendering
+- visual odometry is feature matching for sequence qa, not production slam, loop closure, mapping, or localization
+- gpu benchmark timings are workload demonstrations, not hardware-neutral performance claims
+- kubernetes manifests are local-development manifests and do not include ingress, secrets management, persistent volume claims, or production autoscaling
 
 ## engineering notes
 

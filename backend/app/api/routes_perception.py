@@ -17,5 +17,5 @@ def load_sample(request: PerceptionLoadRequest) -> PerceptionLoadResponse:
 
 @router.post("/visual-odometry", response_model=VisualOdometryResponse)
 def visual_odometry(request: VisualOdometryRequest) -> VisualOdometryResponse:
-    estimates, limitations = run_visual_odometry(request.dataset_path)
-    return VisualOdometryResponse(frame_count=max(0, len(estimates) + 1), estimates=estimates, limitations=limitations)
+    estimates, limitations, frame_count = run_visual_odometry(request.dataset_path)
+    return VisualOdometryResponse(frame_count=frame_count, estimates=estimates, limitations=limitations)

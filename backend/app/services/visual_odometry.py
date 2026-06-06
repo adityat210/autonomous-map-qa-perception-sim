@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from app.core.config import resolve_project_path
 from app.models.schemas import MotionEstimate
 
 
@@ -21,20 +22,20 @@ def _fallback_estimates(image_paths: list[Path]) -> list[MotionEstimate]:
     ]
 
 
-def run_visual_odometry(dataset_path: str) -> tuple[list[MotionEstimate], list[str]]:
-    root = Path(dataset_path)
+def run_visual_odometry(dataset_path: str) -> tuple[list[MotionEstimate], list[str], int]:
+    root = resolve_project_path(dataset_path)
     image_paths = sorted((root / "images").glob("*.png")) + sorted((root / "images").glob("*.jpg")) + sorted((root / "images").glob("*.ppm"))
     limitations = [
         "this module estimates frame-to-frame motion for qa and simulation inspection only.",
         "it is not a full slam system and does not perform loop closure or map optimization.",
     ]
     if len(image_paths) < 2:
-        return [], limitations + ["at least two frames are required."]
+        return [], limitations + ["at least two frames are required."], len(image_paths)
     try:
         import cv2
         import numpy as np
     except Exception:
-        return _fallback_estimates(image_paths), limitations + ["opencv is unavailable, so zero-motion placeholders were returned."]
+        return _fallback_estimates(image_paths), limitations + ["opencv is unavailable, so zero-motion placeholders were returned."], len(image_paths)
     calibration_path = root / "calibration.json"
     intrinsics = None
     if calibration_path.exists():
@@ -88,4 +89,4 @@ def run_visual_odometry(dataset_path: str) -> tuple[list[MotionEstimate], list[s
                 dz=round(dz, 4),
             )
         )
-    return estimates, limitations
+    return estimates, limitations, len(image_paths)

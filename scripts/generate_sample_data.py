@@ -6,6 +6,9 @@ import struct
 from pathlib import Path
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
 def write_ppm_as_png_named(path: Path, offset: int) -> None:
     width, height = 160, 90
     rows = []
@@ -17,7 +20,7 @@ def write_ppm_as_png_named(path: Path, offset: int) -> None:
 
 
 def main() -> None:
-    root = Path("data/sample/perception")
+    root = PROJECT_ROOT / "data/sample/perception"
     image_dir = root / "images"
     pc_dir = root / "pointcloud"
     image_dir.mkdir(parents=True, exist_ok=True)

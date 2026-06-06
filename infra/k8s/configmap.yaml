@@ -4,4 +4,3 @@ metadata:
   name: map-qa-config
 data:
   MAP_QA_DATA_DIR: /app/data/sample
-  VITE_API_URL: http://localhost:8000

@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from app.core.config import resolve_project_path
 from app.models.schemas import MapIssue, PerceptionFrame
 from app.services.map_validation import _issue
 
 
 def load_perception_sample(dataset_path: str) -> tuple[list[PerceptionFrame], list[MapIssue]]:
-    root = Path(dataset_path)
+    root = resolve_project_path(dataset_path)
     image_dir = root / "images"
     pc_dir = root / "pointcloud"
     timestamps_path = root / "timestamps.txt"

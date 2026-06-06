@@ -1,0 +1,2 @@
+# optional pytorch install for cuda or accelerated cpu benchmark runs
+torch>=2.2
